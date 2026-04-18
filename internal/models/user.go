@@ -11,7 +11,7 @@ type User struct {
 	SeasonPoints    float64   `json:"season_points"`
 	CFPoints        float64   `json:"cf_points"`
 	AtCoderPoints float64 `gorm:"column:atcoder_points" json:"atcoder_points"`
-	Activity7D      int       `json:"activity_7d"`
+	Activity7D      int       `gorm:"column:activity7_d" json:"activity_7d"`
 	
 	CurrentRating   int       `json:"current_rating"`
 	MaxRating       int       `json:"max_rating"`
