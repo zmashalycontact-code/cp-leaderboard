@@ -1,4 +1,5 @@
 ---
+app_port: 7860
 title: idc-ICPC
 emoji: 💻
 colorFrom: blue
