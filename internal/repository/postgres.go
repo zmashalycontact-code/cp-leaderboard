@@ -100,7 +100,7 @@ func (r *postgresSnapshotRepo) Upsert(ctx context.Context, s *models.DailySnapsh
 			DoUpdates: clause.AssignmentColumns([]string{
 				"season_points",
 				"total_solved",
-				"activity7_d",
+				"activity7_d"s,
 				"current_rating",
 				"rank_tier",
 			}),
