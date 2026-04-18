@@ -82,11 +82,25 @@ const TableRow = ({ user, rank }) => (
 
     <div className="text-center text-slate-300 font-mono font-bold">{user.total_solved}</div>
     
-    <div className="text-center text-emerald-400 font-mono font-black flex items-center justify-center gap-1">
-       {user.activity_7d} <Flame size={12} fill="currentColor" className="opacity-80" />
-    </div>
-  </motion.div>
-);
+	<div className="text-center text-emerald-400 font-mono font-black flex flex-col items-center justify-center gap-1">
+
+	  <div className="flex items-center gap-1">
+	    {user.activity_7d} <Flame size={12} fill="currentColor" className="opacity-80" />
+	  </div>
+
+
+	  {user.hidden_solved > 0 && (
+	    <motion.span 
+	      initial={{ scale: 0 }}
+	      animate={{ scale: 1 }}
+	      className="bg-indigo-500/20 text-indigo-400 text-[9px] font-bold px-2 py-0.5 rounded-full border border-indigo-500/30 whitespace-nowrap"
+	    >
+	      +{user.hidden_solved} شيتات
+	    </motion.span>
+	  )}
+	</div>
+	</motion.div>
+	);
 
 export default function App() {
   const [users, setUsers]       = useState([]);
