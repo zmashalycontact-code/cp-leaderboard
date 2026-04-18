@@ -88,19 +88,27 @@ func (s *SyncEngine) processUser(ctx context.Context, u *models.User) {
 		if curRating > 0 { u.CurrentRating = curRating }
 		u.PeakWeeklyRating = peakRating 
 		u.StruggleCount = hardAc
-		u.HiddenSolved = apiHidden
 
 
 		totalSinceStart := u.TotalSolved - u.BaseSolvedCount
 		if totalSinceStart < 0 { totalSinceStart = 0 }
 		
 
-		mathHidden := totalSinceStart - apiCount
-		if mathHidden < 0 { mathHidden = 0 }
+		publicCount := apiCount - apiHidden 
+		
 
-		if mathHidden > 0 { 
-			u.HiddenSolved += mathHidden
-			cfPts += float64(mathHidden * 4)
+		actualHidden := totalSinceStart - publicCount
+		if actualHidden < 0 { actualHidden = 0 }
+		
+		u.HiddenSolved = actualHidden
+
+
+		missingFromApi := actualHidden - apiHidden
+		if missingFromApi < 0 { missingFromApi = 0 }
+
+
+		if missingFromApi > 0 {
+			cfPts += float64(missingFromApi * 4)
 		}
 
 		if u.ManualBonus > 0 {
@@ -120,7 +128,8 @@ func (s *SyncEngine) processUser(ctx context.Context, u *models.User) {
 			u.Activity7D = u.TotalSolved - snaps[0].TotalSolved
 		} else {
 
-			u.Activity7D = weekAct
+
+			u.Activity7D = weekAct + missingFromApi
 		}
 
 		if u.Activity7D < 0 { 
@@ -162,7 +171,6 @@ func (s *SyncEngine) processUser(ctx context.Context, u *models.User) {
 		s.rdb.HSet(ctx, "leaderboard", u.Handle, userData)
 	}
 }
-
 func (s *SyncEngine) scrapeTotalSolvedUltimate(handle string) int {
 	urls := []string{
 		fmt.Sprintf("https://codeforces.com/profile/%s?lang=en", handle),
