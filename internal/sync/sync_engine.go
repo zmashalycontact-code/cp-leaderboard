@@ -77,37 +77,28 @@ func (s *SyncEngine) Run(ctx context.Context) {
 func (s *SyncEngine) processUser(ctx context.Context, u *models.User) {
 
 	scrapedTotal := s.scrapeTotalSolvedUltimate(u.Handle)
-	if scrapedTotal > 0 { 
-		u.TotalSolved = scrapedTotal 
+	if scrapedTotal > 0 {
+		u.TotalSolved = scrapedTotal
 	}
 
-
 	apiCount, cfPts, hardAc, weekAct, curRating, apiHidden, peakRating, errCF := s.fetchStatusStats(u)
-	
+
 	if errCF == nil {
 		if curRating > 0 { u.CurrentRating = curRating }
-		u.PeakWeeklyRating = peakRating 
+		u.PeakWeeklyRating = peakRating
 		u.StruggleCount = hardAc
 
 
+		u.HiddenSolved = apiHidden
+
 		totalSinceStart := u.TotalSolved - u.BaseSolvedCount
 		if totalSinceStart < 0 { totalSinceStart = 0 }
-		
-
-		publicCount := apiCount - apiHidden 
-		
-
-		actualHidden := totalSinceStart - publicCount
-		if actualHidden < 0 { actualHidden = 0 }
-		
-		u.HiddenSolved = actualHidden
 
 
-
-
-		missingFromApi := actualHidden - apiHidden
-		if missingFromApi > 0 {
-			cfPts += float64(missingFromApi * 4)
+		mathHidden := totalSinceStart - apiCount
+		if mathHidden > 0 {
+			u.HiddenSolved += mathHidden
+			cfPts += float64(mathHidden * 4)
 		}
 
 
@@ -115,43 +106,38 @@ func (s *SyncEngine) processUser(ctx context.Context, u *models.User) {
 			u.HiddenSolved += u.ManualBonus
 			cfPts += float64(u.ManualBonus * 4)
 		}
-		
-		cfPts += float64(hardAc) * 0.5
+
 		u.CFPoints = cfPts
 
 
 		sevenDaysAgo := time.Now().AddDate(0, 0, -7).Truncate(24 * time.Hour)
-		snaps, errSnap := s.snapshotRepo.FindByUserAndDateRange(ctx, u.ID, sevenDaysAgo, sevenDaysAgo.Add(23*time.Hour))
-		
+		snaps, errSnap := s.snapshotRepo.FindByUserAndDateRange(
+			ctx, u.ID, sevenDaysAgo, sevenDaysAgo.Add(23*time.Hour),
+		)
 		if errSnap == nil && len(snaps) > 0 {
-
 			u.Activity7D = u.TotalSolved - snaps[0].TotalSolved
 		} else {
-
 			u.Activity7D = weekAct
 		}
+		if u.Activity7D < 0 { u.Activity7D = 0 }
 
-		if u.Activity7D < 0 { 
-			u.Activity7D = 0 
-		}
 	} else {
 		s.logger.Warn("⚠️ فشل CF API - تم الاحتفاظ بالبيانات القديمة", "handle", u.Handle, "err", errCF)
 	}
 
 	atcoderPts, errAC := s.fetchAtCoderStats(u.AtCoderHandle)
 	if errAC == nil {
-		u.AtCoderPoints = atcoderPts 
+		u.AtCoderPoints = atcoderPts
 	} else {
 		s.logger.Warn("⚠️ فشل AtCoder API - تم الاحتفاظ بالبيانات القديمة", "handle", u.Handle, "err", errAC)
 	}
 
-	u.SeasonPoints = u.CFPoints + u.AtCoderPoints 
+	u.SeasonPoints = u.CFPoints + u.AtCoderPoints
 	u.RankTier = s.getRankTier(u.SeasonPoints)
 	u.LastSyncedAt = time.Now()
 
 	s.userRepo.Update(ctx, u)
 
-	// تسجيل اللقطة اليومية
 	snapshot := &models.DailySnapshot{
 		UserID:        u.ID,
 		Handle:        u.Handle,
