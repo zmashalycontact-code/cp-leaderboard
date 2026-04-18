@@ -150,6 +150,14 @@ func (s *SyncEngine) processUser(ctx context.Context, u *models.User) {
 	u.RankTier = s.getRankTier(u.SeasonPoints)
 	u.LastSyncedAt = time.Now()
 
+		s.logger.Info("📊 تقرير حساب المتسابق", 
+			"handle", u.Handle, 
+			"weekAct_API", weekAct, 
+			"Missing_Sheets", missingFromApi, 
+			"Final_7D", u.Activity7D,
+			"Total_Hidden", u.HiddenSolved,
+			)
+
 	s.userRepo.Update(ctx, u)
 
 
