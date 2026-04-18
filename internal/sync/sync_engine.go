@@ -93,10 +93,7 @@ func (s *SyncEngine) processUser(ctx context.Context, u *models.User) {
 		totalSinceStart := u.TotalSolved - u.BaseSolvedCount
 		if totalSinceStart < 0 { totalSinceStart = 0 }
 		
-
 		publicCount := apiCount - apiHidden 
-		
-
 		actualHidden := totalSinceStart - publicCount
 		if actualHidden < 0 { actualHidden = 0 }
 		
@@ -124,17 +121,24 @@ func (s *SyncEngine) processUser(ctx context.Context, u *models.User) {
 		snaps, errSnap := s.snapshotRepo.FindByUserAndDateRange(ctx, u.ID, sevenDaysAgo, sevenDaysAgo.Add(23*time.Hour))
 		
 		if errSnap == nil && len(snaps) > 0 {
-
 			u.Activity7D = u.TotalSolved - snaps[0].TotalSolved
 		} else {
-
-
 			u.Activity7D = weekAct + missingFromApi
 		}
 
 		if u.Activity7D < 0 { 
 			u.Activity7D = 0 
 		}
+
+
+		s.logger.Info("📊 تقرير حساب المتسابق", 
+			"handle", u.Handle, 
+			"weekAct_API", weekAct, 
+			"Missing_Sheets", missingFromApi, 
+			"Final_7D", u.Activity7D,
+			"Total_Hidden", u.HiddenSolved,
+		)
+
 	} else {
 		s.logger.Warn("⚠️ فشل CF API - تم الاحتفاظ بالبيانات القديمة", "handle", u.Handle, "err", errCF)
 	}
@@ -149,14 +153,6 @@ func (s *SyncEngine) processUser(ctx context.Context, u *models.User) {
 	u.SeasonPoints = u.CFPoints + u.AtCoderPoints 
 	u.RankTier = s.getRankTier(u.SeasonPoints)
 	u.LastSyncedAt = time.Now()
-
-		s.logger.Info("📊 تقرير حساب المتسابق", 
-			"handle", u.Handle, 
-			"weekAct_API", weekAct, 
-			"Missing_Sheets", missingFromApi, 
-			"Final_7D", u.Activity7D,
-			"Total_Hidden", u.HiddenSolved,
-			)
 
 	s.userRepo.Update(ctx, u)
 
@@ -179,6 +175,7 @@ func (s *SyncEngine) processUser(ctx context.Context, u *models.User) {
 		s.rdb.HSet(ctx, "leaderboard", u.Handle, userData)
 	}
 }
+
 func (s *SyncEngine) scrapeTotalSolvedUltimate(handle string) int {
 	urls := []string{
 		fmt.Sprintf("https://codeforces.com/profile/%s?lang=en", handle),
@@ -287,8 +284,6 @@ func (s *SyncEngine) fetchStatusStats(u *models.User) (count int, pts float64, h
 				if sub.Problem.Rating >= 800 {
 					pts += float64(sub.Problem.Rating-700) / 100.0
 				} else if sub.Problem.Rating == 0 {
-
-
 					pts += 4.0
 					apiHidden++
 				} else {
