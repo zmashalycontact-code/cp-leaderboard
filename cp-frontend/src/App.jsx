@@ -1,22 +1,20 @@
 import StatsDashboard from './StatsDashboard';
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Trophy, Skull, Ghost, Flame, AlertCircle, Target, Hash, Zap, User, Star, Activity } from 'lucide-react';
-
+import { Trophy, Skull, Ghost, Flame, AlertCircle, Target, Activity, Smartphone, RotateCcw } from 'lucide-react';
 
 const getRankColor = (tier) => {
   switch (tier) {
-    case 'كحيان':         return 'text-gray-400 border-gray-600 bg-gray-400/10';
-    case 'روش':           return 'text-cyan-400 border-cyan-600 bg-cyan-400/10';
-    case 'باشا ستراكشر':  return 'text-teal-400 border-teal-600 bg-teal-400/10 shadow-[0_0_10px_rgba(45,212,191,0.3)]';
-    case 'شكسبير':        return 'text-purple-400 border-purple-600 bg-purple-400/10 shadow-[0_0_10px_rgba(192,132,252,0.4)]';
-    case 'تنين مجنح':     return 'text-red-500 border-red-600 bg-red-500/10 shadow-[0_0_15px_rgba(239,68,68,0.5)]';
-    case 'The GOAT':      return 'text-fuchsia-400 border-fuchsia-500 bg-fuchsia-400/10 shadow-[0_0_15px_rgba(232,121,249,0.5)] animate-pulse';
-    case 'CP MASTER':     return 'text-yellow-400 border-yellow-500 bg-yellow-400/10 shadow-[0_0_20px_rgba(250,204,21,0.6)] animate-pulse font-extrabold';
-    default:              return 'text-gray-300 border-gray-500 bg-gray-500/10';
+    case 'كحيان':        return 'text-gray-400 border-gray-600 bg-gray-400/10';
+    case 'روش':          return 'text-cyan-400 border-cyan-600 bg-cyan-400/10';
+    case 'باشا ستراكشر': return 'text-teal-400 border-teal-600 bg-teal-400/10 shadow-[0_0_10px_rgba(45,212,191,0.3)]';
+    case 'شكسبير':       return 'text-purple-400 border-purple-600 bg-purple-400/10 shadow-[0_0_10px_rgba(192,132,252,0.4)]';
+    case 'تنين مجنح':    return 'text-red-500 border-red-600 bg-red-500/10 shadow-[0_0_15px_rgba(239,68,68,0.5)]';
+    case 'The GOAT':     return 'text-fuchsia-400 border-fuchsia-500 bg-fuchsia-400/10 shadow-[0_0_15px_rgba(232,121,249,0.5)] animate-pulse';
+    case 'CP MASTER':    return 'text-yellow-400 border-yellow-500 bg-yellow-400/10 shadow-[0_0_20px_rgba(250,204,21,0.6)] animate-pulse font-extrabold';
+    default:             return 'text-gray-300 border-gray-500 bg-gray-500/10';
   }
 };
-
 
 const getRankNumberColor = (rank) => {
   switch (rank) {
@@ -27,52 +25,71 @@ const getRankNumberColor = (rank) => {
   }
 };
 
-
 const TableRow = ({ user, rank }) => (
   <motion.div
     initial={{ opacity: 0, y: 10 }}
     animate={{ opacity: 1, y: 0 }}
-
-    className="grid grid-cols-[80px_minmax(200px,1fr)_120px_140px_100px_100px_100px_100px_100px] gap-4 items-center py-4 px-6 bg-white/5 hover:bg-white/[0.08] transition-all rounded-xl mb-3 border border-white/5 min-w-[1000px]"
+    className="grid grid-cols-[80px_minmax(200px,1fr)_120px_140px_100px_100px_100px_100px_100px] gap-4 items-center py-4 px-6 bg-white/5 hover:bg-white/[0.08] transition-all rounded-xl mb-3 border border-white/5"
   >
+
     <div className="text-xl font-mono flex items-center gap-1">
       <span className="text-xs opacity-50 text-slate-600">#</span>
-      <span className={`font-black ${getRankNumberColor(rank)}`}>
-        {rank}
-      </span>
+      <span className={`font-black ${getRankNumberColor(rank)}`}>{rank}</span>
     </div>
 
-    <div className="text-right">
-      <div className="text-lg font-bold text-slate-100 tracking-tight">{user.display_name}</div>
-      <div className="text-xs text-slate-500 font-mono opacity-80">@{user.handle}</div>
-      
-      <div className="flex flex-wrap gap-2 mt-2">
-        {user.peak_weekly_rating > 0 && (
-          <span className="flex items-center gap-1 px-2 py-0.5 rounded-md text-[9px] font-bold bg-blue-500/10 text-blue-400 border border-blue-500/20 uppercase tracking-tighter">
-            <Target size={10} strokeWidth={3} /> Peak {user.peak_weekly_rating}
-          </span>
-        )}
 
-        {user.struggle_count > 0 && (
-          <span className="flex items-center gap-1 px-2 py-0.5 rounded-md text-[9px] font-bold bg-red-500/10 text-red-400 border border-red-500/20 uppercase tracking-tighter">
-            <Skull size={10} strokeWidth={3} />
-            <span>عنيد</span>
-            <span className="bg-red-500/20 px-1 rounded ml-0.5">{user.struggle_count}</span>
-          </span>
-        )}
+    <div className="flex items-center gap-3 text-right">
+
+      <div className="w-9 h-9 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-[11px] font-black shadow-lg flex-shrink-0">
+        {user.display_name?.substring(0, 2).toUpperCase()}
+      </div>
+      <div className="flex flex-col min-w-0">
+        <span className="text-white font-bold truncate">{user.display_name}</span>
+        <span className="text-xs text-slate-500 font-mono truncate">@{user.handle}</span>
+
+        <div className="flex flex-wrap gap-1.5 mt-1.5">
+          {user.peak_weekly_rating > 0 && (
+            <span className="flex items-center gap-1 px-2 py-0.5 rounded-md text-[9px] font-bold bg-blue-500/10 text-blue-400 border border-blue-500/20 uppercase tracking-tighter">
+              <Target size={9} strokeWidth={3} /> Peak {user.peak_weekly_rating}
+            </span>
+          )}
+          {user.struggle_count > 0 && (
+            <span className="flex items-center gap-1 px-2 py-0.5 rounded-md text-[9px] font-bold bg-red-500/10 text-red-400 border border-red-500/20 uppercase tracking-tighter">
+              <Skull size={9} strokeWidth={3} /> عنيد {user.struggle_count}
+            </span>
+          )}
+          {user.hidden_solved > 0 && (
+            <span className="flex items-center gap-1 px-2 py-0.5 rounded-md text-[9px] font-bold bg-indigo-500/10 text-indigo-400 border border-indigo-500/20">
+              <Ghost size={9} strokeWidth={3} /> +{user.hidden_solved} شيتات
+            </span>
+          )}
+        </div>
       </div>
     </div>
 
+
     <div className="text-center">
       <span className={`px-2.5 py-1 rounded-md text-[9px] font-black tracking-widest uppercase border ${getRankColor(user.rank_tier)}`}>
-        {user.rank_tier === 'CP MASTER' ? user.display_name : (user.rank_tier || 'UNRANKED')}
+        {user.rank_tier || 'كحيان'}
       </span>
     </div>
 
-    <div className="text-center text-2xl font-mono font-black text-white">{user.season_points?.toFixed(1)}</div>
-    <div className="text-center text-slate-400 font-mono font-bold">{user.cf_points?.toFixed(1)}</div>
-    <div className="text-center text-slate-400 font-mono font-bold">{user.atcoder_points || 0}</div>
-    
+
+    <div className="text-center text-2xl font-mono font-black text-white">
+      {user.season_points?.toFixed(1)}
+    </div>
+
+    {/* CF PTS */}
+    <div className="text-center text-slate-400 font-mono font-bold">
+      {user.cf_points?.toFixed(1)}
+    </div>
+
+    {/* AC PTS */}
+    <div className="text-center text-slate-400 font-mono font-bold">
+      {user.atcoder_points || 0}
+    </div>
+
+
     <div className="text-center">
       {user.current_rating > 0
         ? <span className="text-orange-400 font-mono font-bold">{user.current_rating}</span>
@@ -80,32 +97,22 @@ const TableRow = ({ user, rank }) => (
       }
     </div>
 
-    <div className="text-center text-slate-300 font-mono font-bold">{user.total_solved}</div>
-    
-	<div className="text-center text-emerald-400 font-mono font-black flex flex-col items-center justify-center gap-1">
 
-	  <div className="flex items-center gap-1">
-	    {user.activity_7d} <Flame size={12} fill="currentColor" className="opacity-80" />
-	  </div>
+    <div className="text-center text-slate-300 font-mono font-bold">
+      {user.total_solved}
+    </div>
 
 
-	  {user.hidden_solved > 0 && (
-	    <motion.span 
-	      initial={{ scale: 0 }}
-	      animate={{ scale: 1 }}
-	      className="bg-indigo-500/20 text-indigo-400 text-[9px] font-bold px-2 py-0.5 rounded-full border border-indigo-500/30 whitespace-nowrap"
-	    >
-	      +{user.hidden_solved} شيتات
-	    </motion.span>
-	  )}
-	</div>
-	</motion.div>
-	);
+    <div className="text-center text-emerald-400 font-mono font-black flex items-center justify-center gap-1">
+      {user.activity_7d} <Flame size={12} fill="currentColor" className="opacity-80" />
+    </div>
+  </motion.div>
+);
 
 export default function App() {
-  const [users, setUsers]       = useState([]);
-  const [loading, setLoading]   = useState(true);
-  const [error, setError]       = useState(null);
+  const [users, setUsers]         = useState([]);
+  const [loading, setLoading]     = useState(true);
+  const [error, setError]         = useState(null);
   const [activeTab, setActiveTab] = useState('leaderboard');
 
   useEffect(() => {
@@ -157,21 +164,21 @@ export default function App() {
           <button
             onClick={() => setActiveTab('leaderboard')}
             className={`flex items-center justify-center gap-3 w-full md:w-auto px-10 py-4 rounded-2xl font-black text-xs tracking-[0.2em] uppercase transition-all duration-500 ${
-              activeTab === 'leaderboard' 
-              ? 'bg-emerald-500 text-black shadow-[0_0_30px_rgba(16,185,129,0.3)] scale-100 md:scale-105' 
-              : 'bg-white/5 text-slate-500 hover:bg-white/10 hover:text-slate-300'
+              activeTab === 'leaderboard'
+                ? 'bg-emerald-500 text-black shadow-[0_0_30px_rgba(16,185,129,0.3)] scale-100 md:scale-105'
+                : 'bg-white/5 text-slate-500 hover:bg-white/10 hover:text-slate-300'
             }`}
           >
             <Trophy size={18} strokeWidth={2.5} />
             LEADERBOARD
           </button>
-          
+
           <button
             onClick={() => setActiveTab('stats')}
             className={`flex items-center justify-center gap-3 w-full md:w-auto px-10 py-4 rounded-2xl font-black text-xs tracking-[0.2em] uppercase transition-all duration-500 ${
-              activeTab === 'stats' 
-              ? 'bg-purple-600 text-white shadow-[0_0_30px_rgba(147,51,234,0.3)] scale-100 md:scale-105' 
-              : 'bg-white/5 text-slate-500 hover:bg-white/10 hover:text-slate-300'
+              activeTab === 'stats'
+                ? 'bg-purple-600 text-white shadow-[0_0_30px_rgba(147,51,234,0.3)] scale-100 md:scale-105'
+                : 'bg-white/5 text-slate-500 hover:bg-white/10 hover:text-slate-300'
             }`}
           >
             <Activity size={18} strokeWidth={2.5} />
@@ -179,12 +186,14 @@ export default function App() {
           </button>
         </div>
 
+        {/* Loading */}
         {loading && (
           <div className="text-center py-20 animate-pulse text-xl md:text-2xl font-black">
             جاري مزامنة المصفوفة...
           </div>
         )}
 
+        {/* Error */}
         {error && !loading && (
           <div className="flex flex-col md:flex-row items-center justify-center gap-3 py-20 text-red-400 text-center">
             <AlertCircle size={24} />
@@ -192,39 +201,59 @@ export default function App() {
           </div>
         )}
 
+
         {!loading && !error && (
           activeTab === 'leaderboard' ? (
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
 
-            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="overflow-x-auto pb-6 scrollbar-hide md:scrollbar-default">
-              <div className="min-w-[1000px]">
-                <div className="grid grid-cols-[80px_minmax(200px,1fr)_120px_140px_100px_100px_100px_100px_100px] gap-4 py-4 px-6 text-[10px] font-black text-slate-600 uppercase tracking-widest border-b border-white/5 mb-6">
-                  <div>#</div>
-                  <div className="text-right">المنافس</div>
-                  <div className="text-center">الرتبة</div>
-                  <div className="text-center">إجمالي النقاط</div>
-                  <div className="text-center">CF PTS</div>
-                  <div className="text-center">AC PTS</div>
-                  <div className="text-center text-orange-400/80">الريت</div>
-                  <div className="text-center">مسائل خام</div>
-                  <div className="text-center">فورسز 7D</div>
+
+              <div className="md:hidden portrait:flex landscape:hidden items-center justify-center gap-3 bg-indigo-500/10 border border-indigo-500/20 text-indigo-300 p-3 rounded-2xl mb-6 animate-pulse">
+                <Smartphone className="w-5 h-5 flex-shrink-0 animate-bounce" />
+                <span className="text-[10px] font-black text-center">لأفضل تجربة، لف الموبايل بالعرض أو استخدم اللابتوب</span>
+                <RotateCcw className="w-4 h-4 flex-shrink-0" />
+              </div>
+
+
+              <div className="bg-white/[0.02] border border-white/10 p-4 md:p-6 rounded-3xl shadow-2xl">
+                <div className="overflow-x-auto pb-4">
+                  <div className="min-w-[1000px]">
+
+
+                    <div className="grid grid-cols-[80px_minmax(200px,1fr)_120px_140px_100px_100px_100px_100px_100px] gap-4 py-4 px-6 text-[10px] font-black text-slate-600 uppercase tracking-widest border-b border-white/5 mb-6">
+                      <div>#</div>
+                      <div className="text-right">المنافس</div>
+                      <div className="text-center">الرتبة</div>
+                      <div className="text-center">إجمالي النقاط</div>
+                      <div className="text-center">CF PTS</div>
+                      <div className="text-center">AC PTS</div>
+                      <div className="text-center text-orange-400/80">الريت</div>
+                      <div className="text-center">مسائل خام</div>
+                      <div className="text-center">فورسز 7D</div>
+                    </div>
+
+
+                    {users.map((u, i) => <TableRow key={u.handle} user={u} rank={i + 1} />)}
+
+                  </div>
                 </div>
-                {users.map((u, i) => <TableRow key={u.handle} user={u} rank={i + 1} />)}
               </div>
             </motion.div>
           ) : (
             <StatsDashboard users={users} />
           )
         )}
-	
+
+
         <footer className="mt-12 md:mt-20 pb-10 border-t border-white/5 pt-8 text-center">
           <p className="text-slate-500 text-sm font-medium tracking-wide">
-            Made with <span className="text-red-500 animate-pulse inline-block">❤️</span> by 
+            Made with <span className="text-red-500 animate-pulse inline-block">❤️</span> by
             <span className="text-slate-300 font-bold ml-1">Ziad Mashaly</span>
           </p>
           <p className="text-slate-600 text-[10px] mt-1 uppercase tracking-[0.2em]">
             ICPC Delta University Community President
           </p>
         </footer>
+
       </div>
     </div>
   );
