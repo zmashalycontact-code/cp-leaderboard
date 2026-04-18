@@ -81,7 +81,6 @@ func (s *SyncEngine) processUser(ctx context.Context, u *models.User) {
 		u.TotalSolved = scrapedTotal 
 	}
 
-
 	apiCount, cfPts, hardAc, weekAct, curRating, apiHidden, peakRating, errCF := s.fetchStatusStats(u)
 	
 	if errCF == nil {
@@ -89,7 +88,6 @@ func (s *SyncEngine) processUser(ctx context.Context, u *models.User) {
 		u.PeakWeeklyRating = peakRating 
 		u.StruggleCount = hardAc
 		u.HiddenSolved = apiHidden
-
 
 		totalSinceStart := u.TotalSolved - u.BaseSolvedCount
 		if totalSinceStart < 0 { totalSinceStart = 0 }
@@ -107,19 +105,14 @@ func (s *SyncEngine) processUser(ctx context.Context, u *models.User) {
 		cfPts += float64(hardAc) * 0.5
 		u.CFPoints = cfPts
 
-
 		sevenDaysAgo := time.Now().AddDate(0, 0, -7).Truncate(24 * time.Hour)
 		snaps, errSnap := s.snapshotRepo.FindByUserAndDateRange(ctx, u.ID, sevenDaysAgo, sevenDaysAgo.Add(23*time.Hour))
 		
 		if errSnap == nil && len(snaps) > 0 {
-
 			u.Activity7D = u.TotalSolved - snaps[0].TotalSolved
 		} else {
-
-
 			seasonActivity := u.TotalSolved - u.BaseSolvedCount
 			
-
 			if seasonActivity > weekAct {
 				u.Activity7D = seasonActivity
 			} else {
@@ -146,7 +139,6 @@ func (s *SyncEngine) processUser(ctx context.Context, u *models.User) {
 	u.LastSyncedAt = time.Now()
 
 	s.userRepo.Update(ctx, u)
-
 
 	snapshot := &models.DailySnapshot{
 		UserID:        u.ID,
@@ -219,7 +211,7 @@ func extractSolved(html string) int {
 		re := regexp.MustCompile(p)
 		match := re.FindStringSubmatch(html)
 		if len(match) > 1 {
-			val, _ strconv.Atoi(match[1])
+			val, _ := strconv.Atoi(match[1])
 			return val
 		}
 	}
