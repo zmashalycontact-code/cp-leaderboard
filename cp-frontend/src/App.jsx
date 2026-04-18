@@ -221,10 +221,17 @@ export default function App() {
           )
         )}
 
-        <footer className="mt-12 md:mt-20 pb-10 border-t border-white/5 pt-8 text-center text-slate-500 text-sm font-medium tracking-wide">
-          Made with ❤️ by <span className="text-slate-300 font-bold ml-1">Ziad Mashaly</span>
-        </footer>
-      </div>
-    </div>
-  );
+	<footer className="mt-12 md:mt-20 pb-10 border-t border-white/5 pt-8 text-center">
+		  <p className="text-slate-500 text-sm font-medium tracking-wide">
+		    Made with <span className="text-red-500 animate-pulse inline-block">❤️</span> by 
+		    <span className="text-slate-300 font-bold ml-1">Ziad Mashaly</span>
+		  </p>
+		  <p className="text-slate-600 text-[10px] mt-1 uppercase tracking-[0.2em]">
+		    ICPC Delta University Community President
+		  </p>
+		</footer>
+
+	      </div>
+	    </div>
+	  );
 }
