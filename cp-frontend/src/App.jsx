@@ -45,7 +45,6 @@ const TableRow = ({ user, rank }) => {
             <span className="flex items-center gap-1 px-2 py-0.5 rounded-md text-[9px] font-bold bg-red-500/10 text-red-400 border border-red-500/20 uppercase tracking-tighter">
               <Skull size={10} strokeWidth={3} />
               <span>عنيد</span>
-
               <span className="bg-red-500/20 px-1 rounded ml-0.5">{user.struggle_count}</span>
             </span>
           )}
@@ -64,8 +63,6 @@ const TableRow = ({ user, rank }) => {
       </div>
 
       <div className="text-center text-slate-400 font-mono font-bold">{(user.cf_points || 0).toFixed(1)}</div>
-      
-
       <div className="text-center text-slate-400 font-mono font-bold">{(user.atcoder_points || 0).toFixed(1)}</div>
       
       <div className="text-center font-bold">
@@ -84,7 +81,8 @@ const TableRow = ({ user, rank }) => {
         </div>
         {user.hidden_solved > 0 && (
           <motion.span 
-            initial={{ scale: 0 }} animate={{ scale: 1 }}
+            initial={{ scale: 0 }}
+            animate={{ scale: 1 }}
             className="bg-indigo-500/20 text-indigo-400 text-[9px] font-bold px-2 py-0.5 rounded-full border border-indigo-500/30 whitespace-nowrap"
           >
             +{user.hidden_solved} شيتات
@@ -101,7 +99,6 @@ export default function App() {
   const [activeTab, setActiveTab] = useState('table');
 
   useEffect(() => {
-
     const API_URL = import.meta.env.VITE_API_URL || 'https://zmashaly-idc-icpc.hf.space';
     
     fetch(`${API_URL}/api/leaderboard`)
@@ -133,24 +130,24 @@ export default function App() {
             <h1 className="text-4xl md:text-7xl font-black tracking-tighter text-white mb-4 italic uppercase">
               IDC CP <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 via-purple-400 to-pink-400">Leaderboard</span>
             </h1>
-            <p className="text-slate-500 font-bold tracking-widest uppercase text-[10px] md:text-xs text-center">
+            <p className="text-slate-500 font-bold tracking-widest uppercase text-[10px] md:text-xs">
               Season 2026 • Delta University ICPC Community
             </p>
           </motion.div>
         </header>
 
         <div className="flex justify-center mb-10 gap-2">
-          <button onClick={() => setActiveTab('table')} className={`px-8 py-3 rounded-full font-black text-xs uppercase tracking-[0.2em] transition-all ${activeTab === 'table' ? 'bg-indigo-600 text-white shadow-lg scale-105' : 'bg-white/5 text-slate-500 hover:bg-white/10'}`}>
+          <button onClick={() => setActiveTab('table')} className={`px-8 py-3 rounded-full font-black text-xs uppercase tracking-[0.2em] transition-all ${activeTab === 'table' ? 'bg-indigo-600 text-white shadow-lg' : 'bg-white/5 text-slate-500 hover:bg-white/10'}`}>
             LEADERBOARD
           </button>
-          <button onClick={() => setActiveTab('stats')} className={`px-8 py-3 rounded-full font-black text-xs uppercase tracking-[0.2em] transition-all ${activeTab === 'stats' ? 'bg-indigo-600 text-white shadow-lg scale-105' : 'bg-white/5 text-slate-500 hover:bg-white/10'}`}>
+          <button onClick={() => setActiveTab('stats')} className={`px-8 py-3 rounded-full font-black text-xs uppercase tracking-[0.2em] transition-all ${activeTab === 'stats' ? 'bg-indigo-600 text-white shadow-lg' : 'bg-white/5 text-slate-500 hover:bg-white/10'}`}>
             STATS
           </button>
         </div>
 
         {loading ? (
           <div className="text-center py-20 animate-pulse text-xl font-black text-slate-500 uppercase tracking-widest">
-            جاري مزامنة المصفوفة...
+            مزامنة البيانات...
           </div>
         ) : (
           activeTab === 'table' ? (
