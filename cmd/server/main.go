@@ -45,7 +45,6 @@ func main() {
 
 	tlsCfg := (*tls.Config)(nil)
 	if os.Getenv("REDIS_TLS") == "true" {
-
 		tlsCfg = &tls.Config{
 			MinVersion: tls.VersionTLS12,
 		}
@@ -56,7 +55,6 @@ func main() {
 		Password:  os.Getenv("REDIS_PASSWORD"),
 		TLSConfig: tlsCfg,
 	})
-
 
 	ctx := context.Background()
 	if err := rdb.Ping(ctx).Err(); err != nil {
@@ -96,7 +94,6 @@ func main() {
 	r := gin.New()
 	r.Use(gin.Recovery())
 
-
 	allowedOrigin := os.Getenv("ALLOWED_ORIGIN")
 	if allowedOrigin == "" {
 		allowedOrigin = "http://localhost:5173"
@@ -112,24 +109,31 @@ func main() {
 
 	// ── 7. Routes ──────────────────────────────────────────────────────────
 
+	// Root endpoint for Hugging Face Readiness Probe
+	r.GET("/", func(c *gin.Context) {
+		c.JSON(http.StatusOK, gin.H{
+			"status":  "Running",
+			"message": "Leaderboard API is UP and actively syncing!",
+		})
+	})
 
 	r.GET("/health", func(c *gin.Context) {
-	    c.JSON(http.StatusOK, gin.H{
-		"status":    "healthy",
-		"version":   "1.0.0",
-		"developed_by": "Ziad Mashaly",
-		"position":  "ICPC Delta University Community President",
-		"message":   "Made with love for the competitive programming community",
-	    })
+		c.JSON(http.StatusOK, gin.H{
+			"status":       "healthy",
+			"version":      "1.0.0",
+			"developed_by": "Ziad Mashaly",
+			"position":     "ICPC Delta University Community President",
+			"message":      "Made with love for the competitive programming community",
+		})
 	})
 
 	// Leaderboard endpoint
 	r.GET("/api/leaderboard", func(c *gin.Context) {
 		users, err := leaderboardSvc.GetLeaderboard(c.Request.Context(), 0)
 		if err != nil {
-			logger.Error("failed to fetch leaderboard", "err", err)
+			logger.Error("Failed to fetch leaderboard", "err", err)
 			c.JSON(http.StatusInternalServerError, gin.H{
-				"error": "فشل في جلب البيانات",
+				"error": "Failed to fetch data from server",
 			})
 			return
 		}
@@ -139,25 +143,23 @@ func main() {
 	// ── 8. Graceful Shutdown ───────────────────────────────────────────────
 	port := os.Getenv("PORT")
 	if port == "" {
-		port = "8080"
+		port = "7860" // ✅ Hugging Face standard port
 	}
 
 	srv := &http.Server{
-		Addr:         ":" + port,
+		Addr:         "0.0.0.0:" + port, // ✅ Must explicitly bind to 0.0.0.0
 		Handler:      r,
 		ReadTimeout:  10 * time.Second,
 		WriteTimeout: 10 * time.Second,
 		IdleTimeout:  60 * time.Second,
 	}
 
-
 	go func() {
-		logger.Info("🚀 Server started", "port", port)
+		logger.Info("🚀 Server started", "port", port, "host", "0.0.0.0")
 		if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
-			log.Fatalf("Server error: %v", err)
+			log.Fatalf("❌ Server error: %v", err)
 		}
 	}()
-
 
 	quit := make(chan os.Signal, 1)
 	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
@@ -170,7 +172,7 @@ func main() {
 	defer shutdownCancel()
 
 	if err := srv.Shutdown(shutdownCtx); err != nil {
-		logger.Error("Server forced to shutdown", "err", err)
+		logger.Error("❌ Server forced to shutdown", "err", err)
 	}
 	logger.Info("✅ Server stopped")
 }
