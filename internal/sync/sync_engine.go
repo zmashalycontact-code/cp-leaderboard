@@ -108,17 +108,27 @@ func (s *SyncEngine) processUser(ctx context.Context, u *models.User) {
 		u.CFPoints = cfPts
 
 
-
 		sevenDaysAgo := time.Now().AddDate(0, 0, -7).Truncate(24 * time.Hour)
 		snaps, errSnap := s.snapshotRepo.FindByUserAndDateRange(ctx, u.ID, sevenDaysAgo, sevenDaysAgo.Add(23*time.Hour))
 		
 		if errSnap == nil && len(snaps) > 0 {
 
 			u.Activity7D = u.TotalSolved - snaps[0].TotalSolved
-			if u.Activity7D < 0 { u.Activity7D = 0 }
 		} else {
 
-			u.Activity7D = weekAct
+
+			seasonActivity := u.TotalSolved - u.BaseSolvedCount
+			
+
+			if seasonActivity > weekAct {
+				u.Activity7D = seasonActivity
+			} else {
+				u.Activity7D = weekAct
+			}
+		}
+
+		if u.Activity7D < 0 { 
+			u.Activity7D = 0 
 		}
 	} else {
 		s.logger.Warn("⚠️ فشل CF API - تم الاحتفاظ بالبيانات القديمة", "handle", u.Handle, "err", errCF)
@@ -156,8 +166,6 @@ func (s *SyncEngine) processUser(ctx context.Context, u *models.User) {
 		s.rdb.HSet(ctx, "leaderboard", u.Handle, userData)
 	}
 }
-
-
 
 func (s *SyncEngine) scrapeTotalSolvedUltimate(handle string) int {
 	urls := []string{
@@ -211,7 +219,7 @@ func extractSolved(html string) int {
 		re := regexp.MustCompile(p)
 		match := re.FindStringSubmatch(html)
 		if len(match) > 1 {
-			val, _ := strconv.Atoi(match[1])
+			val, _ strconv.Atoi(match[1])
 			return val
 		}
 	}
