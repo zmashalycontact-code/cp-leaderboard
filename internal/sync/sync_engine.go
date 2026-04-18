@@ -60,7 +60,6 @@ func (s *SyncEngine) Run(ctx context.Context) {
     s.logger.Info("📋 بدء معالجة المستخدمين", "count", len(users))
 
     for i := range users {
-
         select {
         case <-ctx.Done():
             s.logger.Info("🛑 تم إيقاف المزامنة بسبب context cancellation")
@@ -86,7 +85,6 @@ func (s *SyncEngine) processUser(ctx context.Context, u *models.User) {
 	apiCount, cfPts, hardAc, weekAct, curRating, apiHidden, peakRating, errCF := s.fetchStatusStats(u)
 	
 	if errCF == nil {
-
 		if curRating > 0 { u.CurrentRating = curRating }
 		u.PeakWeeklyRating = peakRating 
 		u.StruggleCount = hardAc
@@ -102,7 +100,6 @@ func (s *SyncEngine) processUser(ctx context.Context, u *models.User) {
 			cfPts += float64(mathHidden * 4)
 		}
 
-
 		if u.ManualBonus > 0 {
 			u.HiddenSolved += u.ManualBonus
 			cfPts += float64(u.ManualBonus * 4)
@@ -111,11 +108,21 @@ func (s *SyncEngine) processUser(ctx context.Context, u *models.User) {
 		u.CFPoints = cfPts
 
 
-		u.Activity7D = weekAct
+
+		sevenDaysAgo := time.Now().AddDate(0, 0, -7).Truncate(24 * time.Hour)
+		snaps, errSnap := s.snapshotRepo.FindByUserAndDateRange(ctx, u.ID, sevenDaysAgo, sevenDaysAgo.Add(23*time.Hour))
+		
+		if errSnap == nil && len(snaps) > 0 {
+
+			u.Activity7D = u.TotalSolved - snaps[0].TotalSolved
+			if u.Activity7D < 0 { u.Activity7D = 0 }
+		} else {
+
+			u.Activity7D = weekAct
+		}
 	} else {
 		s.logger.Warn("⚠️ فشل CF API - تم الاحتفاظ بالبيانات القديمة", "handle", u.Handle, "err", errCF)
 	}
-
 
 	atcoderPts, errAC := s.fetchAtCoderStats(u.AtCoderHandle)
 	if errAC == nil {
@@ -124,11 +131,9 @@ func (s *SyncEngine) processUser(ctx context.Context, u *models.User) {
 		s.logger.Warn("⚠️ فشل AtCoder API - تم الاحتفاظ بالبيانات القديمة", "handle", u.Handle, "err", errAC)
 	}
 
-
 	u.SeasonPoints = u.CFPoints + u.AtCoderPoints 
 	u.RankTier = s.getRankTier(u.SeasonPoints)
 	u.LastSyncedAt = time.Now()
-
 
 	s.userRepo.Update(ctx, u)
 
@@ -141,18 +146,18 @@ func (s *SyncEngine) processUser(ctx context.Context, u *models.User) {
 		Activity7D:    u.Activity7D,
 		CurrentRating: u.CurrentRating,
 		RankTier:      u.RankTier,
-
-		SnapshotDate: time.Now().Truncate(24 * time.Hour),
-		CreatedAt:    time.Now(),
+		SnapshotDate:  time.Now().Truncate(24 * time.Hour),
+		CreatedAt:     time.Now(),
 	}
 	s.snapshotRepo.Upsert(ctx, snapshot)
-
 
 	if s.rdb != nil {
 		userData, _ := json.Marshal(u)
 		s.rdb.HSet(ctx, "leaderboard", u.Handle, userData)
 	}
 }
+
+
 
 func (s *SyncEngine) scrapeTotalSolvedUltimate(handle string) int {
 	urls := []string{

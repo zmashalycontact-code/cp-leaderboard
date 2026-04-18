@@ -13,9 +13,9 @@ A comprehensive leaderboard and performance tracking system built for the **ICPC
 
 ## 🎯 Core Features
 
-- **Automated Synchronization:** Fetches real-time data from competitive programming platforms (Codeforces) including solved problems, current ratings, and 7-day activity streaks.
-- **Dynamic Ranking System:** Assigns custom community tiers (up to "CP MASTER") based on calculated seasonal points.
-- **Advanced Statistics Dashboard:** Visualizes overall camp performance, struggle counts (Stubborn), and peak ratings.
+- **Automated Synchronization:** Fetches real-time data from competitive programming platforms (**Codeforces** & **AtCoder**) including solved problems, current ratings, and 7-day activity streaks.
+- **Dynamic Ranking System:** Assigns custom community tiers (up to **"CP MASTER"**) based on calculated seasonal points.
+- **Advanced Statistics Dashboard:** Visualizes overall camp performance, struggle counts (**Stubborn**), and peak ratings.
 - **Responsive & Professional UI:** A clean, dark-themed dashboard tailored for both desktop and mobile viewing, providing a seamless user experience.
 
 ## 🛠️ Tech Stack
