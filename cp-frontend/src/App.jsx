@@ -89,7 +89,7 @@ const TableRow = ({ user, rank }) => (
           animate={{ scale: 1 }}
           className="bg-indigo-500/20 text-indigo-400 text-[9px] font-bold px-2 py-0.5 rounded-full border border-indigo-500/30 whitespace-nowrap"
         >
-          +{user.hidden_solved} شيتات
+          +{user.hidden_solved} شيتات شهرياً
         </motion.span>
       )}
     </div>
