@@ -40,7 +40,6 @@ func (m *mockUserRepo) Create(_ context.Context, u *models.User) error {
 	return nil
 }
 
-
 func (m *mockUserRepo) FindByID(_ context.Context, id uint) (*models.User, error) {
 	for _, u := range m.users {
 		if u.ID == id {
@@ -154,7 +153,6 @@ func TestEngine_Run_ContextCancelled(t *testing.T) {
 	engine.Run(ctx)
 
 }
-
 
 func TestMockUserRepo_FindByID(t *testing.T) {
 	users := makeTestUsers("alice", "bob")

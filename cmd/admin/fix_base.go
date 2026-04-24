@@ -33,7 +33,7 @@ func main() {
 	oldBase := user.BaseSolvedCount
 	user.BaseSolvedCount = newBase
 	db.Save(&user)
-	
+
 	fmt.Printf("✅ تم تعديل الـ Base للوحش %s بنجاح!\n", handle)
 	fmt.Printf("📉 الـ Base القديم: %d\n", oldBase)
 	fmt.Printf("📈 الـ Base الجديد: %d\n", newBase)

@@ -35,7 +35,7 @@ func main() {
 	}
 
 	for _, u := range usersToSeed {
-		u.TotalSolved = u.BaseSolvedCount 
+		u.TotalSolved = u.BaseSolvedCount
 		db.Create(&u)
 		fmt.Printf("✅ تم إضافة: %-15s | %s\n", u.Handle, u.DisplayName)
 	}

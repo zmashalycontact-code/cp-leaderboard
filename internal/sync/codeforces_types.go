@@ -5,9 +5,9 @@ package sync
 //	{ "status": "OK", "result": [...] }
 //	{ "status": "FAILED", "comment": "handles: User with handle X not found" }
 type cfResponse struct {
-	Status  string    `json:"status"`
-	Comment string    `json:"comment"` // populated only on FAILED
-	Result  []cfUser  `json:"result"`
+	Status  string   `json:"status"`
+	Comment string   `json:"comment"` // populated only on FAILED
+	Result  []cfUser `json:"result"`
 }
 
 // cfUser mirrors the Codeforces `User` object returned by /api/user.info.

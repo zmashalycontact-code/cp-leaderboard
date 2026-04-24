@@ -12,9 +12,9 @@ import (
 	"strconv"
 	"time"
 
+	fhttp "github.com/bogdanfinn/fhttp"
 	tls_client "github.com/bogdanfinn/tls-client"
 	"github.com/bogdanfinn/tls-client/profiles"
-	fhttp "github.com/bogdanfinn/fhttp"
 	"github.com/redis/go-redis/v9"
 	"github.com/zmashaly/cp-leaderboard/internal/models"
 	"github.com/zmashaly/cp-leaderboard/internal/repository"
@@ -44,65 +44,69 @@ func New(ur repository.UserRepository, sr repository.SnapshotRepository, rdb *re
 }
 
 func (s *SyncEngine) Run(ctx context.Context) {
-    s.logger.Info("🔥 بدء دورة المزامنة...")
+	s.logger.Info("🔥 بدء دورة المزامنة...")
 
-    users, err := s.userRepo.ListAll(ctx)
-    if err != nil {
-        s.logger.Error("❌ فشل جلب المستخدمين من DB", "err", err)
-        return
-    }
+	users, err := s.userRepo.ListAll(ctx)
+	if err != nil {
+		s.logger.Error("❌ فشل جلب المستخدمين من DB", "err", err)
+		return
+	}
 
-    if len(users) == 0 {
-        s.logger.Warn("⚠️ لا يوجد مستخدمين في قاعدة البيانات")
-        return
-    }
+	if len(users) == 0 {
+		s.logger.Warn("⚠️ لا يوجد مستخدمين في قاعدة البيانات")
+		return
+	}
 
-    s.logger.Info("📋 بدء معالجة المستخدمين", "count", len(users))
+	s.logger.Info("📋 بدء معالجة المستخدمين", "count", len(users))
 
-    for i := range users {
-        select {
-        case <-ctx.Done():
-            s.logger.Info("🛑 تم إيقاف المزامنة بسبب context cancellation")
-            return
-        default:
-        }
+	for i := range users {
+		select {
+		case <-ctx.Done():
+			s.logger.Info("🛑 تم إيقاف المزامنة بسبب context cancellation")
+			return
+		default:
+		}
 
-        s.processUser(ctx, &users[i])
-        time.Sleep(1 * time.Second)
-    }
+		s.processUser(ctx, &users[i])
+		time.Sleep(1 * time.Second)
+	}
 
-    s.logger.Info("✅ انتهت دورة المزامنة بنجاح", "users_synced", len(users))
+	s.logger.Info("✅ انتهت دورة المزامنة بنجاح", "users_synced", len(users))
 }
 
 func (s *SyncEngine) processUser(ctx context.Context, u *models.User) {
 
 	scrapedTotal := s.scrapeTotalSolvedUltimate(u.Handle)
-	if scrapedTotal > 0 { 
-		u.TotalSolved = scrapedTotal 
+	if scrapedTotal > 0 {
+		u.TotalSolved = scrapedTotal
 	}
 
-
 	apiCount, cfPts, hardAc, weekAct, curRating, apiHidden, peakRating, errCF := s.fetchStatusStats(u)
-	
+
 	if errCF == nil {
-		if curRating > 0 { u.CurrentRating = curRating }
-		u.PeakWeeklyRating = peakRating 
+		if curRating > 0 {
+			u.CurrentRating = curRating
+		}
+		u.PeakWeeklyRating = peakRating
 		u.StruggleCount = hardAc
 
-
 		totalSinceStart := u.TotalSolved - u.BaseSolvedCount
-		if totalSinceStart < 0 { totalSinceStart = 0 }
-		
-		publicCount := apiCount - apiHidden 
+		if totalSinceStart < 0 {
+			totalSinceStart = 0
+		}
+
+		publicCount := apiCount - apiHidden
 		actualHidden := totalSinceStart - publicCount
-		if actualHidden < 0 { actualHidden = 0 }
-		
+		if actualHidden < 0 {
+			actualHidden = 0
+		}
+
 		u.HiddenSolved = actualHidden
 
-
 		missingFromApi := actualHidden - apiHidden
-		if missingFromApi < 0 { missingFromApi = 0 }
-
+		if missingFromApi < 0 {
+			missingFromApi = 0
+		}
 
 		if missingFromApi > 0 {
 			cfPts += float64(missingFromApi * 4)
@@ -112,29 +116,34 @@ func (s *SyncEngine) processUser(ctx context.Context, u *models.User) {
 			u.HiddenSolved += u.ManualBonus
 			cfPts += float64(u.ManualBonus * 4)
 		}
-		
+
 		cfPts += float64(hardAc) * 0.5
 		u.CFPoints = cfPts
 
+		seasonStart := time.Unix(s.startDate, 0)
+		daysSinceStart := int(time.Since(seasonStart).Hours() / 24)
+		if daysSinceStart < 0 {
+			daysSinceStart = 0
+		}
+		currentWeek := daysSinceStart / 7
+		currentWeekStartTime := seasonStart.AddDate(0, 0, currentWeek*7).Truncate(24 * time.Hour)
 
-		sevenDaysAgo := time.Now().AddDate(0, 0, -7).Truncate(24 * time.Hour)
-		snaps, errSnap := s.snapshotRepo.FindByUserAndDateRange(ctx, u.ID, sevenDaysAgo, sevenDaysAgo.Add(23*time.Hour))
-		
+		snaps, errSnap := s.snapshotRepo.FindByUserAndDateRange(ctx, u.ID, currentWeekStartTime, currentWeekStartTime.Add(23*time.Hour))
+
 		if errSnap == nil && len(snaps) > 0 {
 			u.Activity7D = u.TotalSolved - snaps[0].TotalSolved
 		} else {
 			u.Activity7D = weekAct + missingFromApi
 		}
 
-		if u.Activity7D < 0 { 
-			u.Activity7D = 0 
+		if u.Activity7D < 0 {
+			u.Activity7D = 0
 		}
 
-
-		s.logger.Info("📊 تقرير حساب المتسابق", 
-			"handle", u.Handle, 
-			"weekAct_API", weekAct, 
-			"Missing_Sheets", missingFromApi, 
+		s.logger.Info("📊 تقرير حساب المتسابق",
+			"handle", u.Handle,
+			"weekAct_API", weekAct,
+			"Missing_Sheets", missingFromApi,
 			"Final_7D", u.Activity7D,
 			"Total_Hidden", u.HiddenSolved,
 		)
@@ -145,17 +154,16 @@ func (s *SyncEngine) processUser(ctx context.Context, u *models.User) {
 
 	atcoderPts, errAC := s.fetchAtCoderStats(u.AtCoderHandle)
 	if errAC == nil {
-		u.AtCoderPoints = atcoderPts 
+		u.AtCoderPoints = atcoderPts
 	} else {
 		s.logger.Warn("⚠️ فشل AtCoder API - تم الاحتفاظ بالبيانات القديمة", "handle", u.Handle, "err", errAC)
 	}
 
-	u.SeasonPoints = u.CFPoints + u.AtCoderPoints 
+	u.SeasonPoints = u.CFPoints + u.AtCoderPoints
 	u.RankTier = s.getRankTier(u.SeasonPoints)
 	u.LastSyncedAt = time.Now()
 
 	s.userRepo.Update(ctx, u)
-
 
 	snapshot := &models.DailySnapshot{
 		UserID:        u.ID,
@@ -186,16 +194,22 @@ func (s *SyncEngine) scrapeTotalSolvedUltimate(handle string) int {
 		tls_client.WithClientProfile(profiles.Chrome_120),
 	}
 	client, err := tls_client.NewHttpClient(tls_client.NewNoopLogger(), options...)
-	if err != nil { return s.scrapeWithProxies(handle) }
+	if err != nil {
+		return s.scrapeWithProxies(handle)
+	}
 
 	for _, u := range urls {
 		req, _ := fhttp.NewRequest(fhttp.MethodGet, u, nil)
 		req.Header.Set("User-Agent", "Mozilla/5.0")
 		resp, err := client.Do(req)
-		if err != nil || resp.StatusCode != 200 { continue }
+		if err != nil || resp.StatusCode != 200 {
+			continue
+		}
 		body, _ := io.ReadAll(resp.Body)
 		resp.Body.Close()
-		if val := extractSolved(string(body)); val > 0 { return val }
+		if val := extractSolved(string(body)); val > 0 {
+			return val
+		}
 	}
 	return s.scrapeWithProxies(handle)
 }
@@ -213,7 +227,9 @@ func (s *SyncEngine) scrapeWithProxies(handle string) int {
 		if resp, err := client.Do(req); err == nil && resp.StatusCode == 200 {
 			body, _ := io.ReadAll(resp.Body)
 			resp.Body.Close()
-			if val := extractSolved(string(body)); val > 0 { return val }
+			if val := extractSolved(string(body)); val > 0 {
+				return val
+			}
 		}
 	}
 	return 0
@@ -238,7 +254,7 @@ func extractSolved(html string) int {
 func (s *SyncEngine) fetchStatusStats(u *models.User) (count int, pts float64, hard int, week int, rating int, apiHidden int, peak int, err error) {
 	resp, err := http.Get("https://codeforces.com/api/user.status?handle=" + u.Handle)
 	if err != nil {
-    		return count, pts, hard, week, 0, apiHidden, peak, fmt.Errorf("CF user.info failed: %v", err)
+		return count, pts, hard, week, 0, apiHidden, peak, fmt.Errorf("CF user.info failed: %v", err)
 	}
 	defer resp.Body.Close()
 
@@ -250,7 +266,7 @@ func (s *SyncEngine) fetchStatusStats(u *models.User) (count int, pts float64, h
 		Status string         `json:"status"`
 		Result []CFSubmission `json:"result"`
 	}
-	
+
 	if err := json.NewDecoder(resp.Body).Decode(&res); err != nil {
 		return 0, 0, 0, 0, 0, 0, 0, err
 	}
@@ -259,8 +275,17 @@ func (s *SyncEngine) fetchStatusStats(u *models.User) (count int, pts float64, h
 		return 0, 0, 0, 0, 0, 0, 0, fmt.Errorf("CF API status: %s", res.Status)
 	}
 
-	sevenDaysAgo := time.Now().Add(-7 * 24 * time.Hour).Unix()
-	problemMap := make(map[string]struct{ solved bool; fails int })
+	seasonStart := time.Unix(s.startDate, 0)
+	daysSinceStart := int(time.Since(seasonStart).Hours() / 24)
+	if daysSinceStart < 0 {
+		daysSinceStart = 0
+	}
+	currentWeek := daysSinceStart / 7
+	currentWeekStartUnix := seasonStart.AddDate(0, 0, currentWeek*7).Unix()
+	problemMap := make(map[string]struct {
+		solved bool
+		fails  int
+	})
 	prevSolved := make(map[string]bool)
 
 	for _, sub := range res.Result {
@@ -272,9 +297,13 @@ func (s *SyncEngine) fetchStatusStats(u *models.User) (count int, pts float64, h
 
 	for i := len(res.Result) - 1; i >= 0; i-- {
 		sub := res.Result[i]
-		if sub.CreationTimeSeconds < s.startDate { continue }
+		if sub.CreationTimeSeconds < s.startDate {
+			continue
+		}
 		id := fmt.Sprintf("%d%s", sub.Problem.ContestId, sub.Problem.Index)
-		if prevSolved[id] { continue }
+		if prevSolved[id] {
+			continue
+		}
 
 		p := problemMap[id]
 		if sub.Verdict == "OK" {
@@ -289,14 +318,20 @@ func (s *SyncEngine) fetchStatusStats(u *models.User) (count int, pts float64, h
 				} else {
 					pts += 1.0
 				}
-				if sub.CreationTimeSeconds >= sevenDaysAgo {
+				if sub.CreationTimeSeconds >= currentWeekStartUnix {
 					week++
-					if sub.Problem.Rating > peak { peak = sub.Problem.Rating }
+					if sub.Problem.Rating > peak {
+						peak = sub.Problem.Rating
+					}
 				}
-				if p.fails >= 3 { hard++ }
+				if p.fails >= 3 {
+					hard++
+				}
 			}
 		} else if sub.Verdict != "TESTING" && sub.Verdict != "COMPILATION_ERROR" {
-			if !p.solved { p.fails++ }
+			if !p.solved {
+				p.fails++
+			}
 		}
 		problemMap[id] = p
 	}
@@ -305,11 +340,13 @@ func (s *SyncEngine) fetchStatusStats(u *models.User) (count int, pts float64, h
 	if err == nil {
 		defer infoResp.Body.Close()
 		var infoRes struct {
-			Status string `json:"status"`
+			Status string                 `json:"status"`
 			Result []struct{ Rating int } `json:"result"`
 		}
 		json.NewDecoder(infoResp.Body).Decode(&infoRes)
-		if len(infoRes.Result) > 0 { rating = infoRes.Result[0].Rating }
+		if len(infoRes.Result) > 0 {
+			rating = infoRes.Result[0].Rating
+		}
 	}
 
 	return count, pts, hard, week, rating, apiHidden, peak, nil
@@ -317,31 +354,44 @@ func (s *SyncEngine) fetchStatusStats(u *models.User) (count int, pts float64, h
 
 func (s *SyncEngine) getRankTier(pts float64) string {
 	switch {
-	case pts < 50: return "كحيان"
-	case pts < 150: return "روش"
-	case pts < 250: return "باشا ستراكشر"
-	case pts < 350: return "شكسبير"
-	case pts < 450: return "تنين مجنح"
-	case pts < 600: return "The GOAT"
-	default: return "CP MASTER"
+	case pts < 50:
+		return "كحيان"
+	case pts < 150:
+		return "روش"
+	case pts < 250:
+		return "باشا ستراكشر"
+	case pts < 350:
+		return "شكسبير"
+	case pts < 450:
+		return "تنين مجنح"
+	case pts < 600:
+		return "The GOAT"
+	default:
+		return "CP MASTER"
 	}
 }
 
 func (s *SyncEngine) fetchAtCoderStats(handle string) (float64, error) {
-	if handle == "" { return 0, nil }
+	if handle == "" {
+		return 0, nil
+	}
 
 	now := time.Now()
 	startOfMonth := time.Date(now.Year(), now.Month(), 1, 0, 0, 0, 0, time.Local).Unix()
 	url := fmt.Sprintf("https://kenkoooo.com/atcoder/atcoder-api/v3/user/submissions?user=%s&from_second=%d", handle, startOfMonth)
-	
+
 	client := &http.Client{Timeout: 10 * time.Second}
 	req, err := http.NewRequest("GET", url, nil)
-	if err != nil { return 0, err }
+	if err != nil {
+		return 0, err
+	}
 
 	req.Header.Set("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0")
 
 	resp, err := client.Do(req)
-	if err != nil { return 0, err }
+	if err != nil {
+		return 0, err
+	}
 	defer resp.Body.Close()
 
 	if resp.StatusCode != 200 {
@@ -352,14 +402,16 @@ func (s *SyncEngine) fetchAtCoderStats(handle string) (float64, error) {
 		ProblemID string `json:"problem_id"`
 		Result    string `json:"result"`
 	}
-	
+
 	if err := json.NewDecoder(resp.Body).Decode(&submissions); err != nil {
 		return 0, err
 	}
 
 	uniqueAC := make(map[string]bool)
 	for _, sub := range submissions {
-		if sub.Result == "AC" { uniqueAC[sub.ProblemID] = true }
+		if sub.Result == "AC" {
+			uniqueAC[sub.ProblemID] = true
+		}
 	}
 	return float64(len(uniqueAC) * 5), nil
 }

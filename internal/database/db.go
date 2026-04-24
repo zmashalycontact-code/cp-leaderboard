@@ -25,7 +25,6 @@ func Connect(cfg Config) (*gorm.DB, error) {
 	var db *gorm.DB
 	var err error
 
-
 	for i := 1; i <= 5; i++ {
 		db, err = gorm.Open(postgres.Open(dsn), &gorm.Config{
 
@@ -49,7 +48,6 @@ func Connect(cfg Config) (*gorm.DB, error) {
 	if err != nil {
 		return nil, fmt.Errorf("failed to get sql.DB: %w", err)
 	}
-	
 
 	sqlDB.SetMaxOpenConns(25)
 	sqlDB.SetMaxIdleConns(5)
@@ -57,7 +55,6 @@ func Connect(cfg Config) (*gorm.DB, error) {
 
 	return db, nil
 }
-
 
 func AutoMigrate(db *gorm.DB, dst ...interface{}) error {
 	if err := db.AutoMigrate(dst...); err != nil {

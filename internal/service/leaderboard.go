@@ -40,11 +40,9 @@ func (s *LeaderboardService) GetLeaderboard(ctx context.Context, limit int64) ([
 		users = append(users, u)
 	}
 
-
 	sort.Slice(users, func(i, j int) bool {
 		return users[i].SeasonPoints > users[j].SeasonPoints
 	})
-
 
 	if limit > 0 && int64(len(users)) > limit {
 		users = users[:limit]

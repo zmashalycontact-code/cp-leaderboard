@@ -38,7 +38,7 @@ func (h *LeaderboardHandler) GetLeaderboard(c *gin.Context) {
 	entries, err := h.service.GetLeaderboard(ctx, limit)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
-			"error": "failed to fetch leaderboard",
+			"error":   "failed to fetch leaderboard",
 			"details": err.Error(),
 		})
 		return
