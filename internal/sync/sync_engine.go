@@ -120,25 +120,7 @@ func (s *SyncEngine) processUser(ctx context.Context, u *models.User) {
 		cfPts += float64(hardAc) * 0.5
 		u.CFPoints = cfPts
 
-		seasonStart := time.Unix(s.startDate, 0)
-		daysSinceStart := int(time.Since(seasonStart).Hours() / 24)
-		if daysSinceStart < 0 {
-			daysSinceStart = 0
-		}
-		currentWeek := daysSinceStart / 7
-		currentWeekStartTime := seasonStart.AddDate(0, 0, currentWeek*7).Truncate(24 * time.Hour)
-
-		snaps, errSnap := s.snapshotRepo.FindByUserAndDateRange(ctx, u.ID, currentWeekStartTime, currentWeekStartTime.Add(23*time.Hour))
-
-		if errSnap == nil && len(snaps) > 0 {
-			u.Activity7D = u.TotalSolved - snaps[0].TotalSolved
-		} else {
-			u.Activity7D = weekAct + missingFromApi
-		}
-
-		if u.Activity7D < 0 {
-			u.Activity7D = 0
-		}
+		u.Activity7D = weekAct
 
 		s.logger.Info("📊 تقرير حساب المتسابق",
 			"handle", u.Handle,

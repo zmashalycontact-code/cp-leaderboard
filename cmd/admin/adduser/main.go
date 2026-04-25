@@ -12,38 +12,39 @@ import (
 )
 
 func main() {
-
 	handle := flag.String("handle", "", "Codeforces Handle (مطلوب)")
-	name := flag.String("name", "", "Display Name (مطلوب)")
-	atcoder := flag.String("atcoder", "", "AtCoder Handle (اختياري)")
-	baseCount := flag.Int("base", 0, "Base Solved Count as of April 14 (مهم جداً)")
+	name := flag.String("name", "", "Display Name (مطلوب عند الإضافة)")
+	cheat := flag.Bool("cheat", false, "Mark as cheater (true/false)")
+	base := flag.Int("base", 0, "Base solved count")
 
 	flag.Parse()
 
-	if *handle == "" || *name == "" {
-		log.Fatal("❌ خطأ: لازم تدخل الـ Handle والـ Name.\nمثال: go run cmd/admin/adduser/main.go -handle=tourist -name=\"Ziad Mashaly\" -base=485")
+	if *handle == "" {
+		log.Fatal("❌ لازم تكتب الـ handle على الأقل")
 	}
 
-	fmt.Printf("⏳ جاري إضافة المتسابق: %s (@%s) بأساس مسائل: %d...\n", *name, *handle, *baseCount)
-
-	db, err := database.Connect(database.Config{})
-	if err != nil {
-		log.Fatalf("❌ فشل الاتصال بقاعدة البيانات: %v", err)
-	}
-
+	db, _ := database.Connect(database.Config{})
 	userRepo := repository.NewUserRepository(db)
+	ctx := context.Background()
 
-	newUser := &models.User{
-		Handle:          *handle,
-		AtCoderHandle:   *atcoder,
-		DisplayName:     *name,
-		BaseSolvedCount: *baseCount,
+
+	var user models.User
+	err := db.Where("handle = ?", *handle).First(&user).Error
+
+	if err == nil {
+
+		user.IsCheater = *cheat
+		db.Save(&user)
+		fmt.Printf("✅ تم تحديث حالة المتسابق %s. غشاش: %v\n", *handle, *cheat)
+	} else {
+
+		newUser := &models.User{
+			Handle:          *handle,
+			DisplayName:     *name,
+			BaseSolvedCount: *base,
+			IsCheater:       *cheat,
+		}
+		userRepo.Create(ctx, newUser)
+		fmt.Printf("✅ تم إضافة متسابق جديد وحالته غشاش: %v\n", *cheat)
 	}
-
-	err = userRepo.Create(context.Background(), newUser)
-	if err != nil {
-		log.Fatalf("❌ فشل حفظ المتسابق: %v", err)
-	}
-
-	fmt.Println("✅ تم إضافة المتسابق بنجاح لليدربورد!")
 }

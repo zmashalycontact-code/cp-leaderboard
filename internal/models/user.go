@@ -27,4 +27,5 @@ type User struct {
 
 	LastSyncedAt time.Time `json:"last_synced_at"`
 	UpdatedAt    time.Time `json:"updated_at"`
+	IsCheater bool `json:"is_cheater" gorm:"default:false"`
 }

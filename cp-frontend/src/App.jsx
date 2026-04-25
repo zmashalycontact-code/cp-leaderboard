@@ -30,27 +30,41 @@ const TableRow = ({ user, rank }) => (
     initial={{ opacity: 0, y: 10 }}
     animate={{ opacity: 1, y: 0 }}
     transition={{ delay: rank * 0.05 }}
-    className="grid grid-cols-[80px_minmax(200px,1fr)_120px_140px_100px_100px_100px_100px_100px] gap-4 items-center py-4 px-6 bg-white/5 hover:bg-white/[0.08] transition-all rounded-xl mb-3 border border-white/5 min-w-[1040px]"
+    className={`grid grid-cols-[80px_minmax(200px,1fr)_120px_140px_100px_100px_100px_100px_100px] gap-4 items-center py-4 px-6 transition-all rounded-xl mb-3 border min-w-[1040px] ${
+      user.is_cheater 
+        ? 'bg-[linear-gradient(90deg,rgba(13,40,60,0.8),rgba(0,100,150,0.4))] border-l-4 border-l-[#00b4d8] border-y-cyan-900/30 border-r-cyan-900/30 opacity-60 grayscale-[40%] pointer-events-none'
+        : 'bg-white/5 hover:bg-white/[0.08] border-white/5'
+    }`}
   >
     <div className="text-xl font-mono flex items-center gap-1">
       <span className="text-xs opacity-50 text-slate-600">#</span>
       <span className={`font-black ${getRankNumberColor(rank)}`}>
-        {rank}
+        {user.is_cheater ? "🥶" : rank}
       </span>
     </div>
 
     <div className="text-right">
-      <div className="text-lg font-bold text-slate-100 tracking-tight">{user.display_name}</div>
-      <div className="text-xs text-slate-500 font-mono opacity-80">@{user.handle}</div>
+      <div className={`text-lg font-bold tracking-tight ${user.is_cheater ? 'text-cyan-600 line-through' : 'text-slate-100'}`}>
+        {user.display_name}
+      </div>
+      
+      <div className="flex flex-wrap items-center gap-2">
+        <div className="text-xs text-slate-500 font-mono opacity-80">@{user.handle}</div>
+        {user.is_cheater && (
+          <span className="text-[9px] font-bold bg-cyan-900/50 text-cyan-300 border border-cyan-500/30 px-1.5 py-0.5 rounded uppercase">
+            مُجمد (cheater)
+          </span>
+        )}
+      </div>
       
       <div className="flex flex-wrap gap-2 mt-2">
-        {user.peak_weekly_rating > 0 && (
+        {user.peak_weekly_rating > 0 && !user.is_cheater && (
           <span className="flex items-center gap-1 px-2 py-0.5 rounded-md text-[9px] font-bold bg-blue-500/10 text-blue-400 border border-blue-500/20 uppercase tracking-tighter">
             <Target size={10} strokeWidth={3} /> Peak {user.peak_weekly_rating}
           </span>
         )}
 
-        {user.struggle_count > 0 && (
+        {user.struggle_count > 0 && !user.is_cheater && (
           <span className="flex items-center gap-1 px-2 py-0.5 rounded-md text-[9px] font-bold bg-red-500/10 text-red-400 border border-red-500/20 uppercase tracking-tighter">
             <Skull size={10} strokeWidth={3} />
             <span>عنيد</span>
@@ -61,29 +75,29 @@ const TableRow = ({ user, rank }) => (
     </div>
 
     <div className="text-center">
-      <span className={`px-2.5 py-1 rounded-md text-[9px] font-black tracking-widest uppercase border ${getRankColor(user.rank_tier)}`}>
-        {user.rank_tier === 'CP MASTER' ? user.display_name : (user.rank_tier || 'UNRANKED')}
+      <span className={`px-2.5 py-1 rounded-md text-[9px] font-black tracking-widest uppercase border ${user.is_cheater ? 'text-cyan-700 border-cyan-800 bg-cyan-900/10' : getRankColor(user.rank_tier)}`}>
+        {user.is_cheater ? 'FROZEN' : (user.rank_tier === 'CP MASTER' ? user.display_name : (user.rank_tier || 'UNRANKED'))}
       </span>
     </div>
 
-    <div className="text-center text-2xl font-mono font-black text-white">{(user.season_points || 0).toFixed(1)}</div>
-    <div className="text-center text-slate-400 font-mono font-bold">{(user.cf_points || 0).toFixed(1)}</div>
-    <div className="text-center text-slate-400 font-mono font-bold">{(user.atcoder_points || 0).toFixed(1)}</div>
+    <div className={`text-center text-2xl font-mono font-black ${user.is_cheater ? 'text-cyan-800 line-through' : 'text-white'}`}>{(user.season_points || 0).toFixed(1)}</div>
+    <div className={`text-center font-mono font-bold ${user.is_cheater ? 'text-cyan-800 line-through' : 'text-slate-400'}`}>{(user.cf_points || 0).toFixed(1)}</div>
+    <div className={`text-center font-mono font-bold ${user.is_cheater ? 'text-cyan-800 line-through' : 'text-slate-400'}`}>{(user.atcoder_points || 0).toFixed(1)}</div>
     
     <div className="text-center">
       {user.current_rating > 0
-        ? <span className="text-orange-400 font-mono font-bold">{user.current_rating}</span>
+        ? <span className={`${user.is_cheater ? 'text-cyan-800 line-through' : 'text-orange-400'} font-mono font-bold`}>{user.current_rating}</span>
         : <span className="text-slate-700 text-[10px] font-bold italic uppercase">Unrated</span>
       }
     </div>
 
-    <div className="text-center text-slate-300 font-mono font-bold">{user.total_solved}</div>
+    <div className={`text-center font-mono font-bold ${user.is_cheater ? 'text-cyan-800 line-through' : 'text-slate-300'}`}>{user.total_solved}</div>
     
-    <div className="text-center text-emerald-400 font-mono font-black flex flex-col items-center justify-center gap-1">
+    <div className={`text-center font-mono font-black flex flex-col items-center justify-center gap-1 ${user.is_cheater ? 'text-cyan-800' : 'text-emerald-400'}`}>
       <div className="flex items-center gap-1">
         {user.activity_7d} <Flame size={12} fill="currentColor" className="opacity-80" />
       </div>
-      {user.hidden_solved > 0 && (
+      {user.hidden_solved > 0 && !user.is_cheater && (
         <motion.span 
           initial={{ scale: 0 }}
           animate={{ scale: 1 }}
@@ -95,7 +109,6 @@ const TableRow = ({ user, rank }) => (
     </div>
   </motion.div>
 );
-
 export default function App() {
   const [users, setUsers]       = useState([]);
   const [loading, setLoading]   = useState(true);
@@ -116,14 +129,21 @@ export default function App() {
           ? data
           : Object.values(data).map(i => (typeof i === 'string' ? JSON.parse(i) : i));
         
-        setUsers(arr.filter(u => u && u.handle).sort((a, b) => (b.season_points || 0) - (a.season_points || 0)));
-      })
-      .catch(err => {
-        console.error('Leaderboard fetch failed:', err);
-        setError('تعذّر تحميل البيانات. حاول مرة أخرى.');
-      })
-      .finally(() => setLoading(false));
-  }, []);
+	setUsers(arr.filter(u => u && u.handle).sort((a, b) => {
+
+		  if (a.is_cheater && !b.is_cheater) return 1;
+
+		  if (!a.is_cheater && b.is_cheater) return -1;
+
+		  return (b.season_points || 0) - (a.season_points || 0);
+		}));
+	      })
+	      .catch(err => {
+		console.error('Leaderboard fetch failed:', err);
+		setError('تعذّر تحميل البيانات. حاول مرة أخرى.');
+	      })
+	      .finally(() => setLoading(false));
+	  }, []);
 
   return (
     <div className="min-h-screen bg-black text-slate-200 p-4 md:p-8 font-sans" dir="rtl">
