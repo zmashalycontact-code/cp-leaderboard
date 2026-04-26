@@ -52,7 +52,7 @@ const TableRow = ({ user, rank }) => (
         <div className="text-xs text-slate-500 font-mono opacity-80">@{user.handle}</div>
         {user.is_cheater && (
           <span className="text-[9px] font-bold bg-cyan-900/50 text-cyan-300 border border-cyan-500/30 px-1.5 py-0.5 rounded uppercase">
-            مُجمد (cheater)
+            مُجمد
           </span>
         )}
       </div>
