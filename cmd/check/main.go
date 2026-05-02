@@ -26,7 +26,7 @@ func main() {
 	fmt.Printf("1️⃣ التوتال الحالي في البروفايل: %d\n", u.TotalSolved)
 	fmt.Printf("2️⃣ التوتال اللي بدأ بيه السيزون (Base): %d\n", u.BaseSolvedCount)
 	fmt.Printf("3️⃣ الفرق بينهم (المفروض يكونوا مسائل جديدة): %d\n", u.TotalSolved-u.BaseSolvedCount)
-	fmt.Printf("4️⃣ البونص اليدوي اللي إنت اديتهوله (Admin Tool): %d\n", u.ManualBonus)
+	fmt.Printf("4️⃣ البونص اليدوي اللي إنت اديتهوله (Admin Tool): %.1f\n", u.ManualBonus)
 	fmt.Printf("5️⃣ إجمالي المسائل المخفية المحسوبة حالياً (الشيتات): %d\n", u.HiddenSolved)
 	fmt.Printf("6️⃣ إجمالي النقاط (CF Points): %.2f\n", u.CFPoints)
 	fmt.Printf("=====================================\n\n")

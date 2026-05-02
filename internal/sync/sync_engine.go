@@ -20,6 +20,8 @@ import (
 	"github.com/zmashaly/cp-leaderboard/internal/repository"
 )
 
+
+
 type CFSubmission struct {
 	CreationTimeSeconds int64  `json:"creationTimeSeconds"`
 	Verdict             string `json:"verdict"`
@@ -45,6 +47,32 @@ func New(ur repository.UserRepository, sr repository.SnapshotRepository, rdb *re
 }
 
 func (s *SyncEngine) Run(ctx context.Context) {
+	now := time.Now()
+		currentMonthStart := time.Date(now.Year(), now.Month(), 1, 0, 0, 0, 0, time.Local).Unix()
+
+		if s.startDate < currentMonthStart {
+			s.logger.Info("📅 بداية شهر جديد! جاري تصفير السيستم أوتوماتيكياً...")
+
+			usersToReset, err := s.userRepo.ListAll(ctx)
+			if err == nil {
+				for _, u := range usersToReset {
+					u.BaseSolvedCount = u.TotalSolved
+					u.ManualBonus = 0
+					u.SeasonPoints = 0
+					u.CFPoints = 0
+					u.AtCoderPoints = 0
+					u.HiddenSolved = 0
+					u.Activity7D = 0
+					u.StruggleCount = 0
+					u.PeakWeeklyRating = 0
+					s.userRepo.Update(ctx, &u)
+				}
+				s.startDate = currentMonthStart
+				s.logger.Info("✅ تم تصفير جميع المتسابقين للشهر الجديد!")
+			}
+		}
+		// -------------------------------------------
+
 	s.logger.Info("🔥 بدء دورة المزامنة...")
 
 	users, err := s.userRepo.ListAll(ctx)
@@ -144,7 +172,15 @@ func (s *SyncEngine) processUser(ctx context.Context, u *models.User) {
 	u.SeasonPoints = u.CFPoints + u.AtCoderPoints
 	u.RankTier = s.getRankTier(u.SeasonPoints)
 	u.LastSyncedAt = time.Now()
-
+	if u.IsCheater {
+			u.SeasonPoints = 0
+			u.CFPoints = 0
+			u.AtCoderPoints = 0
+			u.Activity7D = 0
+			u.HiddenSolved = 0
+			u.StruggleCount = 0
+			u.PeakWeeklyRating = 0
+		}
 	s.userRepo.Update(ctx, u)
 
 	snapshot := &models.DailySnapshot{
