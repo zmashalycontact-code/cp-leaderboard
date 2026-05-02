@@ -20,7 +20,7 @@ type User struct {
 	HiddenSolved    int `json:"hidden_solved"`
 	StruggleCount   int `json:"struggle_count"`
 
-	ManualBonus int `json:"manual_bonus"`
+	ManualBonus float64 `json:"manual_bonus" gorm:"default:0"`
 
 	RankTier         string `json:"rank_tier"`
 	PeakWeeklyRating int    `json:"peak_weekly_rating"`

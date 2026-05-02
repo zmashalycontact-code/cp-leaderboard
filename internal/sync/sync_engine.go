@@ -39,7 +39,8 @@ type SyncEngine struct {
 }
 
 func New(ur repository.UserRepository, sr repository.SnapshotRepository, rdb *redis.Client, l *slog.Logger) *SyncEngine {
-	start := time.Date(2026, 4, 14, 0, 0, 0, 0, time.Local).Unix()
+	now := time.Now()
+	start := time.Date(now.Year(), now.Month(), 1, 0, 0, 0, 0, time.Local).Unix()
 	return &SyncEngine{userRepo: ur, snapshotRepo: sr, rdb: rdb, logger: l, startDate: start}
 }
 
@@ -112,10 +113,9 @@ func (s *SyncEngine) processUser(ctx context.Context, u *models.User) {
 			cfPts += float64(missingFromApi * 4)
 		}
 
-		if u.ManualBonus > 0 {
-			u.HiddenSolved += u.ManualBonus
-			cfPts += float64(u.ManualBonus * 4)
-		}
+	if u.ManualBonus != 0 {
+				cfPts += u.ManualBonus
+			}
 
 		cfPts += float64(hardAc) * 0.5
 		u.CFPoints = cfPts
